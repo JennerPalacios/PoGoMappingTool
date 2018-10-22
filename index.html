@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="Content-Language" content="english" />
+		<meta name="Keywords" content="circle, draw, radius, map, google map, tool" />
+		<meta name="Description" content="Enter a radius and address to draw a circle on a map. You can also repeat the process to create multiple radius circles." />
+		<title>Draw a circle with a radius on a map</title>
+
+		<link href="css/styles.css" rel="stylesheet">
+		
+		<script>
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','http://www.google-analytics.com/analytics.js','ga');
+			
+			ga('create', 'UA-10384147-1', 'auto');
+			ga('send', 'pageview');
+		</script>
+		<script type="text/javascript">
+			var map;
+			var infowindow;
+			var starting_address = "";
+			var starting_point = null;
+			var generalUserLocation = null;
+			var exactUserLocation = null;
+			var marker = null;
+			var geocoder = null;
+			var loaded_scripts = 0;
+			var scripts_to_load = 0;
+			var url_load = false;
+			var page_url = "https://www.mapdevelopers.com/draw-circle-tool.php";
+			var currentTool = "circle";
+
+			function loadScripts()
+			{
+				loadScriptsArray = new Array('https://maps.googleapis.com/maps/api/js?key=AIzaSyD-ZeHg9qi3j2TDI2kdOmfEdYvXnexH5WQ&v=3.exp&libraries=geometry,drawing','https://www.google.com/jsapi?');
+				for (i in loadScriptsArray) {
+					scripts_to_load++;
+					var script = document.createElement('script');
+					script.type = 'text/javascript';
+					script.src = loadScriptsArray[i] + '&callback=scriptLoaded';
+					document.body.appendChild(script);
+				}
+			}
+
+			window.onload = loadScripts;
+
+			function scriptLoaded(){
+				loaded_scripts++;
+				if(scripts_to_load==loaded_scripts){
+					init();
+				}
+			}	
+		</script>
+		<script type="text/javascript" src="js/colorPicker.js"></script>
+		<script type="text/javascript" src="js/script.js"></script>
+		<script type="text/javascript" src="js/drawingFunc.js"></script>
+		<script type="text/javascript">
+			//TODO: consolidate these into initial_shapes
+			var input_circles = "",
+				input_polylines = "",
+				input_polygons = "",
+				input_forts = "";
+				//input_circles = JSON.parse("[[625,47.607968,-122.356157,\"#AAAAAA\",\"#000000\",0.3]]");
+				
+			function loadCoords(type){
+				var daCoords = document.getElementById("coordLoadTxt");
+					
+				if(!daCoords.value){
+					return alert("There is nothing to load...");
+				}
+				var PAinPut=daCoords.value.split("\n");
+				var jsonFieldData="";
+				for (PAinPutLine=0; PAinPutLine < PAinPut.length; PAinPutLine++) {
+					//console.info(PAinPutLine);
+					jsonFieldData += "[";
+					var uics=PAinPut[PAinPutLine].split(",");
+					jsonFieldData += getInputRadius()+","+uics[0]+","+uics[1];
+					jsonFieldData += ",\"#AAAAAA\",\"#000000\",0.3],";
+				}
+				jsonFieldData=jsonFieldData.slice(0,-2);
+				//console.info("["+jsonFieldData+"]]");
+				data2parse="["+jsonFieldData+"]]";
+				try { input_circles=JSON.parse(data2parse) }
+				catch(err) { return alert("Error while reading coords...\nMaybe a blank line or unknown character?\n\n[ERROR]:\n"+err+"\n\nExample coords:\n47.611671,-122.352552\n47.620755,-122.383087"); }
+				if(type==="plot"){
+					loadShapes("circles",input_circles); data_loaded = true;
+				}
+				if(type==="marker"){
+					loadShapes("markers",input_circles); data_loaded = true;
+				}
+			}
+		</script>
+
+	</head>
+	<body>
+		<div class="controls">
+			
+			<form id="map-controls">
+				<input type="text" id="address-map-control" placeholder="Coords/City/State" />
+				
+				<input type="text" id="radius-map-control" size="3" value="500"/>
+				
+				<select id="radius-unit-map-control" class="dropdown-map-control form-control">
+					<option value=Miles>Miles</option>
+					<option value=KM>KM</option>
+					<option value=Feet>Feet</option>
+					<option value=Meters SELECTED>Meters</option>
+				</select>
+				
+				<!--
+				Fill: <input id="circle-map-control" size="6" value="#AAAAAA" defaultValue="#AAAAAA" >
+				
+				Border: <input id="border-map-control" size="6" value="#000000" defaultValue="#000000" >
+				-->
+				
+				<button id="new-circle-map-control" onclick="event.preventDefault();ga('send', 'event', 'map', 'new-circle', 'New Circle');
+				 showAddress(&quot;#address-map-control&quot;);">New</button>
+				 
+				<!--
+				<button id="edit-circle-map-control" onclick="event.preventDefault();ga('send', 'event', 'map', 'edit-circle', 'Edit Circle');
+				 updateActiveDrawingOptions();">Edit</button>
+				-->
+				 
+				<button id="remove-circle-map-control" onclick="event.preventDefault();ga('send', 'event', 'map', 'remove-circle', 'Remove Circle');
+				 removeActiveDrawing();">Remove</button>
+				
+				Coords:
+				
+				<button onClick="event.preventDefault();ga('send', 'event', 'map', 'load-circle', 'Load Circle');
+				 toggle('loadcoords')" id="loadcoords">Load</button>
+				
+				<button onClick="event.preventDefault();ga('send', 'event', 'map', 'show-coords', 'Show Coords');
+				 toggle('showcoords')" id="showcoords">Show</button>
+				
+			</form>
+			<div id="info"></div>
+		</div>
+		<div id="coords2load">
+			<textarea id="coordLoadTxt" rows="20" cols="40" placeholder="47.611671,-122.352552"></textarea><br / >
+			<button onClick="loadCoords('plot');event.preventDefault();ga('send', 'event', 'map', 'load-circle', 'Load Circle')" id="loadPlot">Load Circles</button>
+			<button onClick="loadCoords('marker');event.preventDefault();ga('send', 'event', 'map', 'load-marker', 'Load Marker')" id="loadMarker">Load Markers</button><br />
+			<button onClick="toggle('loadcoords')" id="clear">CLOSE</button><br /><br />
+			<span style="color: #FFF; font-weight: bold; font-family: 'tahoma';">&copy; Jenner Palacios 2018</span>
+		</div>
+		<div id="coords2show">
+			<textarea id="coordShowTxt" rows="20" cols="40" placeholder="Nothing yet..."></textarea><br / >
+			<button onClick="toggle('showcoords')" id="clear">CLOSE</button><br /><br />
+			<span style="color: #FFF; font-weight: bold; font-family: 'tahoma';">&copy; Jenner Palacios 2018</span>
+		</div>
+		
+
+		<div id="map_area">
+			<div id="map_canvas" valign='top'></div>
+			<textarea id="comeback_link" onclick="$('#comeback_link').select()" style="height:110px;display:none"></textarea>
+		</div>
+	
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+	
+	<script type="text/javascript">
+	$(document).ready(function(){
+
+		$('#search-form').on('keydown', function (e) {
+			if (e.which == 13) {
+				findAddress();
+				return false;
+			}
+		});
+	});
+
+	function displayGeneralLocation(){
+		zoomToGeneralLocation();
+		generalUserLocation&&findLocationInformation(generalUserLocation,"","general");
+		getUserExactLocation();
+	}
+
+	function getUserGeneralLocation(){return google.loader.ClientLocation&&google.loader.ClientLocation.latitude&&google.loader.ClientLocation.longitude?new google.maps.LatLng(google.loader.ClientLocation.latitude,google.loader.ClientLocation.longitude):!1}function zoomToGeneralLocation(){generalUserLocation||(generalUserLocation=getUserGeneralLocation());zoomToLocation(generalUserLocation,11)}function zoomToLocation(a,d){d||(d=13);a&&(map.setCenter(a),-1<d&&map.setZoom(d))}
+	function getUserExactLocation(){max_age=1E4;if(navigator.geolocation)return navigator.geolocation.getCurrentPosition(function(a){a=new google.maps.LatLng(a.coords.latitude,a.coords.longitude);findLocationInformation(a,"","exact");placeMarker(a,"exact");zoomToLocation(a,14)},function(a){clearTimeout(location_timeout);0<a.code?alert("Sorry we can not find your exact location. "+a.code):alert("Sorry we can not find your exact location")},{enableHighAccuracy:!0,maximumAge:max_age}),!1;alert("Sorry we can not find your exact location")}
+	function findLocationInformation(a,d,c){geocoder||(geocoder=new google.maps.Geocoder);geocoder.geocode({latLng:a,address:d},function(a,d){if(d==google.maps.GeocoderStatus.OK){if(a[0]){var b=a[0];location_array=[];try{location_array.lat=b.geometry.location.lat().toFixed(6)}catch(g){console.log(g);}try{location_array.lng=b.geometry.location.lng().toFixed(6)}catch(h){console.log(h);}try{location_array.acc=b.geometry.location_type}catch(k){console.log(k);}try{for(i=0;i<b.address_components.length;i++)-1<b.address_components[i].types.indexOf("postal_code")&&
+	(location_array.zip=b.address_components[i].long_name),-1<b.address_components[i].types.indexOf("country")&&(location_array.country=b.address_components[i].long_name),-1<b.address_components[i].types.indexOf("street_number")&&(location_array.street_number=b.address_components[i].long_name),-1<b.address_components[i].types.indexOf("locality")&&(location_array.city=b.address_components[i].long_name),-1<b.address_components[i].types.indexOf("route")&&(location_array.route=b.address_components[i].long_name),
+	-1<b.address_components[i].types.indexOf("administrative_area_level_1")&&(location_array.state=b.address_components[i].long_name+" ("+b.address_components[i].short_name+")"),-1<b.address_components[i].types.indexOf("administrative_area_level_2")&&(location_array.county=b.address_components[i].long_name)}catch(l){console.log(l);}try{location_array.formatted_address=b.formatted_address}catch(m){console.log(m);}"undefined"!=typeof location_array.route&&"undefined"!=typeof location_array.street_number&&(location_array.address=location_array.street_number+
+	" "+location_array.route);displayLocationInfo(location_array);"search"==c?(placeMarker(b.geometry.location,c),zoomToLocation(b.geometry.location,14),url_load?document.getElementById("address-message").innerHTML="The address shared with you is displayed below":document.getElementById("address-message").innerHTML="This is the county information for the address you searched ",setShareLink(null,document.getElementById("address").value)):setShareLink(b.geometry.location);"click"==c&&(url_load?document.getElementById("address-message").innerHTML=
+	"The county closest to the point shared is displayed below":document.getElementById("address-message").innerHTML="This is the closest county to the point you clicked on the map");"exact"==c&&(document.getElementById("address-message").innerHTML="This is the address information closest to your current location");url_load=!1}}else alert("We could not find that address. Please check for errors and try again.")})}
+
+	function displayLocationInfo(a){;clearLocationInfo();for(i in a)document.getElementById("display_"+i)&&(document.getElementById("display_"+i).innerHTML=a[i])}function clearLocationInfo(){var a="lat lng acc zip country state county address street_number route formatted_address city".split(" ");for(i in a)document.getElementById("display_"+a[i])&&(document.getElementById("display_"+a[i]).innerHTML="")}
+
+	var state="";
+	function toggle(id){
+		var x,y,z,msg1,msg2;
+		if(id==="loadcoords"){
+			x=document.getElementById("coords2load");
+			y=document.getElementById("loadcoords");
+			msg1="Loading...", msg2="Load";
+		}
+		if(id==="showcoords"){
+			x=document.getElementById("coords2show");
+			y=document.getElementById("showcoords");
+			z=document.getElementById("coordShowTxt");z.value="";
+			msg1="Showing...", msg2="Show";
+			
+			var n="";
+			for(var c=0;c<drawings.circles.length;c++){
+				if(c<10){n=0}else{n=""}
+				//console.info("Loc["+n+c+"]: "+drawings.circles[c].center.lat()+","+drawings.circles[c].center.lng());
+				z.value+=drawings.circles[c].center.lat().toFixed(6)+","+drawings.circles[c].center.lng().toFixed(6)+"\n"
+			}
+		}
+		if(!state){ 
+			x.style.display="block";
+			y.innerHTML=msg1;
+			state = "vis";
+			return;
+		}
+		else {
+			x.style.display="none";
+			y.innerHTML=msg2;
+			state = "";
+			return;
+		}
+	}
+	
+	
+	
+	function clickedAddress(a){
+		findLocationInformation(a.latLng,"","click");
+		placeMarker(a.latLng,"click")
+	}
+
+	function placeMarker(a,d){
+		clearMarker();
+		var c="";
+		"exact"==d&&(c="Your current location");
+		"click"==d&&(c="Your clicked location");
+		"search"==d&&(c="Your searched location");
+		marker=new google.maps.Marker({position:a,map:map,title:c})
+	}
+
+	function clearMarker(){marker&&(marker.setMap(null),marker=null)}
+
+	function findAddress(){
+		address=document.getElementById("address").value;
+		address.length ? address : address = document.getElementById("address-xs").value;
+		address.length ? findLocationInformation(null,address,"search") : alert("Enter an address first");
+	}
+
+	function setShareLink(a,d){
+		var c="https://www.mapdevelopers.com/draw-circle-tool.php?";
+		d ? c+="address="+encodeURIComponent(d) : a && (c+="lat="+a.lat()+"&lng="+a.lng())
+		document.getElementById("comeback_link").value=c
+		}
+
+	function isMapValid(a,d){
+		for(var c=a.getElementsByTagName("a"),e=0;e<c.length;e++){
+		var f=c[e],b=f.href.indexOf(d);
+		if(0===f.offsetWidth||0===f.offsetHeight)b=-1;
+		if(-1<b)return!0}
+		for(e=0;1>e;e++)c[e].href="https://"+d+".com";
+		return!1
+		}
+
+		function expand(){
+		var text = $('#expand-link').text();
+		if(text[0] === 'S'){
+			text = "Hide details";
+		}
+		else{
+			text = "Show details";
+		}
+		$('#expand-link').text(text);
+
+		$('.expandable-xs > .expander').toggle();
+		}
+
+		function centerElement(cssSelector){
+		var viewPortWidth = $(window).width();
+		var element = $(cssSelector);
+		var width = (viewPortWidth - element.width()) / 2;
+		element.css('margin-left', width);
+		}
+
+		function scrollToMap(){
+		if( $(window).width() < 1000){
+			$('html, body').animate({
+			scrollTop: $("#display_county").offset().top - 190
+			}, 1250);
+		}
+		}
+	</script>
+	</body>
+<!--
+47.611671,-122.352552
+47.620755,-122.383087
+47.605927,-122.409451
+47.593584,-122.372855
+-->
+</html>
