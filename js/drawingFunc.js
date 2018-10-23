@@ -475,7 +475,7 @@ function loadShapes(type,data_array){
 	if(type==="spawnpoints"){
 		for(i=0;i<data_array.length;i++){
 			circle = data_array[i];
-			createSpawn(new google.maps.LatLng(circle[1], circle[2]),5,{'fillColor':'#660000','strokeColor':'#330000',fillOpacity:circle[5]});
+			createSpawn(new google.maps.LatLng(circle[1], circle[2]),21,{'fillColor':'#660000','strokeColor':'#330000',fillOpacity:circle[5]});
 		}
 		i=0
 	}
