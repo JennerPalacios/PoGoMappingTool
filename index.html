@@ -53,13 +53,14 @@
 				if(scripts_to_load==loaded_scripts){
 					init();
 				}
-			}	
+			}
+			var errmsg1="Error while reading coords...\nMaybe a blank line or unknown character?\n\n[ERROR]:\n",
+				errmsg2="\n\nExample coords:\n47.611671,-122.352552\n47.620755,-122.383087";
 		</script>
 		<script type="text/javascript" src="js/colorPicker.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script type="text/javascript" src="js/drawingFunc.js"></script>
 		<script type="text/javascript">
-			//TODO: consolidate these into initial_shapes
 			var input_circles = "",
 				input_polylines = "",
 				input_polygons = "",
@@ -68,29 +69,36 @@
 				
 			function loadCoords(type){
 				var daCoords = document.getElementById("coordLoadTxt");
-					
 				if(!daCoords.value){
 					return alert("There is nothing to load...");
 				}
 				var PAinPut=daCoords.value.split("\n");
-				var jsonFieldData="";
+				var jsonFieldData="", icon=null, inputRadius=null;
+				
+				
 				for (PAinPutLine=0; PAinPutLine < PAinPut.length; PAinPutLine++) {
-					//console.info(PAinPutLine);
-					jsonFieldData += "[";
+					jsonFieldData += "["; 
+					if(type==="plot"){ inputRadius=getInputRadius() }
+					if(type==="gym"){ icon="https://raw.githubusercontent.com/JennerPalacios/PoGoMappingTool/master/img/gym-pin.png" } 
+					if(type==="pokestop"){ icon="https://raw.githubusercontent.com/JennerPalacios/PoGoMappingTool/master/img/stop-pin.png" } 
 					var uics=PAinPut[PAinPutLine].split(",");
-					jsonFieldData += getInputRadius()+","+uics[0]+","+uics[1];
-					jsonFieldData += ",\"#AAAAAA\",\"#000000\",0.3],";
+					jsonFieldData += inputRadius+","+uics[0]+","+uics[1]+",\"#AAAAAA\",\"#000000\",0.3,\""+icon+"\"],";
+					//console.info(jsonFieldData);
 				}
-				jsonFieldData=jsonFieldData.slice(0,-2);
-				//console.info("["+jsonFieldData+"]]");
-				data2parse="["+jsonFieldData+"]]";
-				try { input_circles=JSON.parse(data2parse) }
-				catch(err) { return alert("Error while reading coords...\nMaybe a blank line or unknown character?\n\n[ERROR]:\n"+err+"\n\nExample coords:\n47.611671,-122.352552\n47.620755,-122.383087"); }
+				jsonFieldData=jsonFieldData.slice(0,-2);data2parse="["+jsonFieldData+"]]";
+				try { input_circles=JSON.parse(data2parse) } catch(err) { return alert(errmsg1+err+errmsg2); }
+				
 				if(type==="plot"){
 					loadShapes("circles",input_circles); data_loaded = true;
 				}
-				if(type==="marker"){
-					loadShapes("markers",input_circles); data_loaded = true;
+				if(type==="gym"){
+					loadShapes("gyms",input_circles); data_loaded = true;
+				}
+				if(type==="pokestop"){
+					loadShapes("pokestops",input_circles); data_loaded = true;
+				}
+				if(type==="spawn"){
+					loadShapes("spawnpoints",input_circles); data_loaded = true;
 				}
 			}
 		</script>
@@ -141,8 +149,10 @@
 		</div>
 		<div id="coords2load">
 			<textarea id="coordLoadTxt" rows="20" cols="40" placeholder="47.611671,-122.352552"></textarea><br / >
-			<button onClick="loadCoords('plot');event.preventDefault();ga('send', 'event', 'map', 'load-circle', 'Load Circle')" id="loadPlot">Load Circles</button>
-			<button onClick="loadCoords('marker');event.preventDefault();ga('send', 'event', 'map', 'load-marker', 'Load Marker')" id="loadMarker">Load Markers</button><br />
+			<button onClick="loadCoords('plot');event.preventDefault();ga('send', 'event', 'map', 'load-circle', 'Load Circle')" id="loadPlot">Circles</button>
+			<button onClick="loadCoords('gym');event.preventDefault();ga('send', 'event', 'map', 'load-gym', 'Load Gyms')" id="loadGyms">Gyms</button>
+			<button onClick="loadCoords('pokestop');event.preventDefault();ga('send', 'event', 'map', 'load-marker', 'Load PokeStops')" id="loadPokeStops">PokeStops</button>
+			<button onClick="loadCoords('spawn');event.preventDefault();ga('send', 'event', 'map', 'load-spawn', 'Load SpawnPoints')" id="loadSpawnPoints">SpawnPoints</button><br />
 			<button onClick="toggle('loadcoords')" id="clear">CLOSE</button><br /><br />
 			<span style="color: #FFF; font-weight: bold; font-family: 'tahoma';">&copy; Jenner Palacios 2018</span>
 		</div>
@@ -290,6 +300,7 @@
 			}, 1250);
 		}
 		}
+		console.info("47.611671,-122.352552\n47.620755,-122.383087\n47.605927,-122.409451\n47.593584,-122.372855");
 	</script>
 	</body>
 <!--

@@ -181,11 +181,20 @@ function createCircle(latLng,radius,options){
 	displayDrawingInfo(circle);
 }
 
-function createMarker(latLng,name){
+function createSpawn(latLng,radius,options){
+	options = setDefaultDrawingOptions(options);
+	options['map']=map;
+	options['center']=latLng;
+	options['radius']=radius;
+	var circle = new google.maps.Circle(options);
+}
+
+function createMarker(latLng,name,icon){
 	options = [];
 	options['map']=map;
 	options['position']=latLng;
 	options['name']=name;
+	options['icon']=icon;
 	options['draggable']=false;
 	
 	var marker = new google.maps.Marker(options);
@@ -288,7 +297,7 @@ function displayDrawingInfo(shape,element_id){
 			info.innerHTML = '<i>Loc: <input type="text" onClick="this.select()" value="'+shape.getCenter().lat().toFixed(6)+","+shape.getCenter().lng().toFixed(6)+'" /> <small>with ' + shape.radius.toFixed(2) + "m radius</small></i>";
 		}
 		if(drawing_type == "marker"){
-			info.innerHTML = '<i>Fort Location: <input type="text" onClick="this.select()" value="'+shape.getPosition().lat().toFixed(6)+','+shape.getPosition().lng().toFixed(6)+'" /></i>';
+			info.innerHTML = '<i>Selected Location: <input type="text" onClick="this.select()" value="'+shape.getPosition().lat().toFixed(6)+','+shape.getPosition().lng().toFixed(6)+'" /></i>';
 		}
 		if(drawing_type == "polygon"){
 			var fenceArea=getAreaData(shape).split(" "), fensePerimeter=getPerimeterData(shape).split(" ");
@@ -455,13 +464,18 @@ function loadShapes(type,data_array){
 	var i=0;
 	if(typeof data_array == undefined || !data_array)data_array = new Array();
 	
-	//console.info("Loading: "+type);
-	//console.info(data_array);
 	
 	if(type==="circles"){
 		for(i=0;i<data_array.length;i++){
-			circle = data_array[i]; //console.info(data_array[i]);
+			circle = data_array[i];
 			createCircle(new google.maps.LatLng(circle[1], circle[2]),circle[0],{'fillColor':circle[3],'strokeColor':circle[4],fillOpacity:circle[5]});
+		}
+		i=0
+	}
+	if(type==="spawnpoints"){
+		for(i=0;i<data_array.length;i++){
+			circle = data_array[i];
+			createSpawn(new google.maps.LatLng(circle[1], circle[2]),5,{'fillColor':'#660000','strokeColor':'#330000',fillOpacity:circle[5]});
 		}
 		i=0
 	}
@@ -484,11 +498,20 @@ function loadShapes(type,data_array){
 		}
 		i=0
 	}
-	if(type==="markers"){
+	if(type==="gyms"){
 		if(data_array!=undefined){
 			for(i=0;i<data_array.length;i++){
 				marker = data_array[i];
-				createMarker(new google.maps.LatLng(marker[1], marker[2]),i);
+				createMarker(new google.maps.LatLng(marker[1], marker[2]),i,marker[6]);
+			}
+		}
+	}
+	if(type==="pokestops"){
+		if(data_array!=undefined){
+			for(i=0;i<data_array.length;i++){
+				marker = data_array[i];
+				createMarker(new google.maps.LatLng(marker[1], marker[2]),i,marker[6]);
+				console.info(marker);
 			}
 		}
 	}
