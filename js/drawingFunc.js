@@ -301,8 +301,9 @@ function displayDrawingInfo(shape,element_id){
 		}
 		if(drawing_type == "polygon"){
 			var fenceArea=getAreaData(shape).split(" "), fensePerimeter=getPerimeterData(shape).split(" ");
-			for(var coord=0;coord<shape.latLngs.b[0].b.length;coord++){
-				console.info(shape.latLngs.b[0].b[coord].lat()+","+shape.latLngs.b[0].b[coord].lng());
+			coordLetter=Object.keys(shape.latLngs)[0];
+			for(var coord=0;coord<shape.latLngs.j[0].j.length;coord++){
+				console.info(shape.latLngs[coordLetter][0][coordLetter][coord].lat()+","+shape.latLngs[coordLetter][0][coordLetter][coord].lng());
 			}
 			info.innerHTML = fenceArea[0]+": <i>"+fenceArea[1]+"</i>m | "+fensePerimeter[0]+": <i>"+fensePerimeter[1]+"</i>m";
 		}
