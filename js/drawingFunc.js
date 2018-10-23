@@ -301,10 +301,13 @@ function displayDrawingInfo(shape,element_id){
 		}
 		if(drawing_type == "polygon"){
 			var fenceArea=getAreaData(shape).split(" "), fensePerimeter=getPerimeterData(shape).split(" ");
-			coordLetter=Object.keys(shape.latLngs)[0];
-			for(var coord=0;coord<shape.latLngs.j[0].j.length;coord++){
-				console.info(shape.latLngs[coordLetter][0][coordLetter][coord].lat()+","+shape.latLngs[coordLetter][0][coordLetter][coord].lng());
+			coordLetter=Object.keys(shape.latLngs)[0]; console.info("Selected shape has \""+shape.latLngs[coordLetter][0][coordLetter].length+"\" points below:");
+			var allCorners="[", allCornersTxt="";
+			for(var coord=0;coord<shape.latLngs[coordLetter][0][coordLetter].length;coord++){
+				allCorners += "["+shape.latLngs[coordLetter][0][coordLetter][coord].lat()+","+shape.latLngs[coordLetter][0][coordLetter][coord].lng()+"],";
+				allCornersTxt += shape.latLngs[coordLetter][0][coordLetter][coord].lat()+","+shape.latLngs[coordLetter][0][coordLetter][coord].lng()+"\n";
 			}
+			allCorners=allCorners.slice(0,-1);allCorners += "]";allCorners=JSON.parse(allCorners);console.info(allCornersTxt);
 			info.innerHTML = fenceArea[0]+": <i>"+fenceArea[1]+"</i>m | "+fensePerimeter[0]+": <i>"+fensePerimeter[1]+"</i>m";
 		}
 		if(drawing_type == "polyline"){
@@ -476,7 +479,7 @@ function loadShapes(type,data_array){
 	if(type==="spawnpoints"){
 		for(i=0;i<data_array.length;i++){
 			circle = data_array[i];
-			createSpawn(new google.maps.LatLng(circle[1], circle[2]),21,{'fillColor':'#660000','strokeColor':'#330000',fillOpacity:circle[5]});
+			createSpawn(new google.maps.LatLng(circle[1], circle[2]),15,{'fillColor':'#660000','strokeColor':'#330000',fillOpacity:circle[5]});
 		}
 		i=0
 	}
@@ -512,7 +515,6 @@ function loadShapes(type,data_array){
 			for(i=0;i<data_array.length;i++){
 				marker = data_array[i];
 				createMarker(new google.maps.LatLng(marker[1], marker[2]),i,marker[6]);
-				console.info(marker);
 			}
 		}
 	}
