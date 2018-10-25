@@ -15,6 +15,7 @@ function init() {
 			center: new google.maps.LatLng(47.606325,-122.332639),
 			zoom: 13,
 			drawingControl: true,
+			cursor: "crosshair"
 		};
 	}
 
@@ -29,28 +30,11 @@ function init() {
 	setMapMouseListeners();
 	initiateDrawingsArray();
 	
-	if(typeof input_circles != "undefined" && input_circles){
-		loadShapes("circles",input_circles);
-		data_loaded = true;
-	}
-	if(typeof input_polygons != "undefined" && input_polygons){
-		loadShapes("polygons",input_polygons);
-		data_loaded = true;
-	}
-	if(typeof input_polylines != "undefined" && input_polylines){
-		loadShapes("polylines",input_polylines);
-		data_loaded = true;
-	}
-	if(typeof input_forts != "undefined" && input_forts){
-		loadShapes("markers",input_forts);
-		data_loaded = true;
-	}
 	loaded=true;
 	startDM();
 	if(currentTool == "polygon" && !data_loaded)setDrawingMode(currentTool);
 	if(currentTool == "polyline" && !data_loaded)setDrawingMode(currentTool);
 	if(typeof page_url != "undefined")displaySaveLink(page_url,"comeback_link");
-
 }
 
 var map_click_function = function(clickedPoint){

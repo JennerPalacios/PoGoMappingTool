@@ -6,7 +6,7 @@ html, body {
 	font-family: Arial
 }
 
-#coords2load,#coords2show {
+#loadCoordsDiv,#showCoordsDiv {
 	display: none; 
 	position: absolute;
 	padding-top: 3em;
@@ -63,4 +63,11 @@ i input {
 	color: #FFF;
 	background: #600;
 	border: none
+}
+textarea {
+	margin: auto;
+}
+h1 {
+	margin: 0;
+	padding: 0;
 }

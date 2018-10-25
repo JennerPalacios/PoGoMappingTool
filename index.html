@@ -59,13 +59,14 @@
 		</script>
 		<script type="text/javascript" src="js/colorPicker.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
+		<script type="text/javascript" src="js/s2Geometry.js"></script>
 		<script type="text/javascript" src="js/drawingFunc.js"></script>
 		<script type="text/javascript">
 			var input_circles = "",
-				input_polylines = "",
-				input_polygons = "",
-				input_forts = "";
-				//input_circles = JSON.parse("[[625,47.607968,-122.356157,\"#AAAAAA\",\"#000000\",0.3]]");
+				input_gyms = "",
+				input_pokestops = "",
+				input_spawns = "",
+				input_geofenses = "";
 				
 			function loadCoords(type){
 				var daCoords = document.getElementById("coordLoadTxt");
@@ -78,7 +79,7 @@
 				
 				for (PAinPutLine=0; PAinPutLine < PAinPut.length; PAinPutLine++) {
 					jsonFieldData += "["; 
-					if(type==="plot"){ inputRadius=getInputRadius() }
+					if(type==="circle"){ inputRadius=getInputRadius() }
 					if(type==="gym"){ icon="https://raw.githubusercontent.com/JennerPalacios/PoGoMappingTool/master/img/gym-pin.png" } 
 					if(type==="pokestop"){ icon="https://raw.githubusercontent.com/JennerPalacios/PoGoMappingTool/master/img/stop-pin.png" } 
 					var uics=PAinPut[PAinPutLine].split(",");
@@ -86,19 +87,41 @@
 					//console.info(jsonFieldData);
 				}
 				jsonFieldData=jsonFieldData.slice(0,-2);data2parse="["+jsonFieldData+"]]";
-				try { input_circles=JSON.parse(data2parse) } catch(err) { return alert(errmsg1+err+errmsg2); }
+				try {
+					if(type==="circle"){
+						input_circles=JSON.parse(data2parse)
+					}
+					if(type==="gym"){
+						input_gyms=JSON.parse(data2parse)
+					}
+					if(type==="pokestop"){
+						input_pokestops=JSON.parse(data2parse)
+					}
+					if(type==="spawn"){
+						input_spawns=JSON.parse(data2parse)
+					}
+					if(type==="geofense"){
+						input_geofenses=JSON.parse(data2parse)
+					}
+				}
+				catch(err) {
+					return alert(errmsg1+err+errmsg2);
+				}
 				
-				if(type==="plot"){
+				if(type==="circle"){
 					loadShapes("circles",input_circles); data_loaded = true;
 				}
 				if(type==="gym"){
-					loadShapes("gyms",input_circles); data_loaded = true;
+					loadShapes("gyms",input_gyms); data_loaded = true;
 				}
 				if(type==="pokestop"){
-					loadShapes("pokestops",input_circles); data_loaded = true;
+					loadShapes("pokestops",input_pokestops); data_loaded = true;
 				}
 				if(type==="spawn"){
-					loadShapes("spawnpoints",input_circles); data_loaded = true;
+					loadShapes("spawnpoints",input_spawns); data_loaded = true;
+				}
+				if(type==="geofense"){
+					loadShapes("spawnpoints",input_geofenses); data_loaded = true;
 				}
 			}
 		</script>
@@ -139,26 +162,31 @@
 				Coords:
 				
 				<button onClick="event.preventDefault();ga('send', 'event', 'map', 'load-circle', 'Load Circle');
-				 toggle('loadcoords')" id="loadcoords">Load</button>
+				 toggle('loadCoordsDiv')" id="loadCoordsBtn">Load</button>
 				
 				<button onClick="event.preventDefault();ga('send', 'event', 'map', 'show-coords', 'Show Coords');
-				 toggle('showcoords')" id="showcoords">Show</button>
+				 toggle('showCoordsDiv')" id="showCoordsBtn">Show</button>
 				
 			</form>
 			<div id="info"></div>
 		</div>
-		<div id="coords2load">
-			<textarea id="coordLoadTxt" rows="20" cols="40" placeholder="47.611671,-122.352552"></textarea><br / >
-			<button onClick="loadCoords('plot');event.preventDefault();ga('send', 'event', 'map', 'load-circle', 'Load Circle')" id="loadPlot">Circles</button>
+		<div id="loadCoordsDiv">
+			<textarea id="coordLoadTxt" rows="20" cols="40" placeholder="47.611671,-122.352552"></textarea><br />
+			<button onClick="loadCoords('circle');event.preventDefault();ga('send', 'event', 'map', 'load-circle', 'Load Circle')" id="loadPlot">Circles</button>
 			<button onClick="loadCoords('gym');event.preventDefault();ga('send', 'event', 'map', 'load-gym', 'Load Gyms')" id="loadGyms">Gyms</button>
 			<button onClick="loadCoords('pokestop');event.preventDefault();ga('send', 'event', 'map', 'load-marker', 'Load PokeStops')" id="loadPokeStops">PokeStops</button>
 			<button onClick="loadCoords('spawn');event.preventDefault();ga('send', 'event', 'map', 'load-spawn', 'Load SpawnPoints')" id="loadSpawnPoints">SpawnPoints</button><br />
-			<button onClick="toggle('loadcoords')" id="clear">CLOSE</button><br /><br />
+			<button onClick="toggle('closeAll')" id="clear">CLOSE</button><br /><br />
 			<span style="color: #FFF; font-weight: bold; font-family: 'tahoma';">&copy; Jenner Palacios 2018</span>
 		</div>
-		<div id="coords2show">
-			<textarea id="coordShowTxt" rows="20" cols="40" placeholder="Nothing yet..."></textarea><br / >
-			<button onClick="toggle('showcoords')" id="clear">CLOSE</button><br /><br />
+		<div id="showCoordsDiv">
+			<h1 id="showingHeader">Circles:</h1>
+			<textarea id="coordCircleTxt" rows="20" cols="40" placeholder="Circles... Nothing yet..." style="display: none"></textarea>
+			<textarea id="coordGeofenceTxt" rows="20" cols="40" placeholder="Geofences... Nothing yet..." style="display: none"></textarea>
+			
+			<button onClick="toggle('showCoordsToggle')" id="showCoordsToggleBtn">Show Geofences</button>
+			
+			<button onClick="toggle('closeAll')" id="clear">CLOSE</button><br /><br />
 			<span style="color: #FFF; font-weight: bold; font-family: 'tahoma';">&copy; Jenner Palacios 2018</span>
 		</div>
 		
@@ -199,38 +227,57 @@
 
 	function displayLocationInfo(a){;clearLocationInfo();for(i in a)document.getElementById("display_"+i)&&(document.getElementById("display_"+i).innerHTML=a[i])}function clearLocationInfo(){var a="lat lng acc zip country state county address street_number route formatted_address city".split(" ");for(i in a)document.getElementById("display_"+a[i])&&(document.getElementById("display_"+a[i]).innerHTML="")}
 
-	var state="";
+	var showing="";
 	function toggle(id){
-		var x,y,z,msg1,msg2;
-		if(id==="loadcoords"){
-			x=document.getElementById("coords2load");
-			y=document.getElementById("loadcoords");
-			msg1="Loading...", msg2="Load";
+		var loadCoordsBtn=document.getElementById("loadCoordsBtn"), showCoordsBtn=document.getElementById("showCoordsBtn"),
+			loadCoordsDiv=document.getElementById("loadCoordsDiv"), showCoordsDiv=document.getElementById("showCoordsDiv"),
+			coordCircleTxt=document.getElementById("coordCircleTxt"), coordGeofenceTxt=document.getElementById("coordGeofenceTxt"),
+			showCoordsToggleBtn=document.getElementById("showCoordsToggleBtn"), showingHeader=document.getElementById("showingHeader");
+		
+		if(id==="closeAll"){
+			loadCoordsBtn.innerHTML="Load", showCoordsBtn.innerHTML="Show", showCoordsToggleBtn.innerHTML="Show Geofence",
+			loadCoordsDiv.style.display="none", showCoordsDiv.style.display="none",
+			coordCircleTxt.style.display="none", coordGeofenceTxt.style.display="none",
+			showing=""
 		}
-		if(id==="showcoords"){
-			x=document.getElementById("coords2show");
-			y=document.getElementById("showcoords");
-			z=document.getElementById("coordShowTxt");z.value="";
-			msg1="Showing...", msg2="Show";
-			
-			var n="";
+		if(id==="loadCoordsDiv"){
+			loadCoordsBtn.innerHTML="Loading...",
+			loadCoordsDiv.style.display="block";
+			return
+		}
+		if(id==="showCoordsDiv"){
+			var txtValue=""; showing="circles";
+				coordCircleTxt.value="",
+				showCoordsDiv.style.display="block", coordCircleTxt.style.display="block",
+				showCoordsBtn.innerHTML="Showing...", showingHeader.innerHTML="Circles:";
+			// GET CIRCLE COORDS
 			for(var c=0;c<drawings.circles.length;c++){
-				if(c<10){n=0}else{n=""}
-				//console.info("Loc["+n+c+"]: "+drawings.circles[c].center.lat()+","+drawings.circles[c].center.lng());
-				z.value+=drawings.circles[c].center.lat().toFixed(6)+","+drawings.circles[c].center.lng().toFixed(6)+"\n"
+				coordCircleTxt.value+=drawings.circles[c].center.lat().toFixed(6)+","+drawings.circles[c].center.lng().toFixed(6)+"\n"
 			}
+			txtValue=coordCircleTxt.value, txtValue=txtValue.slice(0,-1), coordCircleTxt.value=txtValue;	
+			return
 		}
-		if(!state){ 
-			x.style.display="block";
-			y.innerHTML=msg1;
-			state = "vis";
-			return;
-		}
-		else {
-			x.style.display="none";
-			y.innerHTML=msg2;
-			state = "";
-			return;
+		if(id==="showCoordsToggle"){
+			if(showing==="circles"){
+				coordGeofenceTxt.value="";
+				
+				// GET GEOFENCE COORDS
+				for(var c=0;c<drawings.polygons.length;c++){
+					coordLetter=Object.keys(drawings.polygons[c].latLngs)[0];
+					var allCornersTxt="";
+					for(var coord=0;coord<drawings.polygons[c].latLngs[coordLetter][0][coordLetter].length;coord++){
+						allCornersTxt += drawings.polygons[c].latLngs[coordLetter][0][coordLetter][coord].lat()+","+drawings.polygons[c].latLngs[coordLetter][0][coordLetter][coord].lng()+"\n";
+					}
+					coordGeofenceTxt.value += "[GeofenceID "+drawings.polygons[c].zIndex+"]\n"+allCornersTxt+"\n";
+				}
+				coordCircleTxt.style.display="none", coordGeofenceTxt.style.display="block",
+				showCoordsToggleBtn.innerHTML="Show Circles", showingHeader.innerHTML="Geofence:"; showing="geofence";
+				return
+			}
+			else {
+				coordGeofenceTxt.style.display="none", coordCircleTxt.style.display="block",
+				showCoordsToggleBtn.innerHTML="Show Geofence", showingHeader.innerHTML="Circles:"; showing="circles";
+			}
 		}
 	}
 	

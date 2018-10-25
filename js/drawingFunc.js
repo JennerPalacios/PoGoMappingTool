@@ -1,14 +1,17 @@
 //global variables
-var drawings = null;
-var current_shape = null;
-var drawingManager = null;
-var temp_shape = null;
+var L = null,
+	S2 = null,
+	s2Center = [],
+	drawings = null,
+	current_shape = null,
+	drawingManager = null,
+	temp_shape = null,
 
-var mouse_draw = false;
-var drag_line_start_point = null;
-var mouseTraceLine = null;
-var mouseMoveTraceHandler = null;
-var workingLine = null;
+	mouse_draw = false,
+	drag_line_start_point = null,
+	mouseTraceLine = null,
+	mouseMoveTraceHandler = null,
+	workingLine = null;
 
 
 
@@ -49,13 +52,13 @@ function startDM(options){
 
 function addPolygonEvents(polygon){
 	google.maps.event.addListener(polygon.getPath(), 'set_at', function() {
-	  displayDrawingInfo(polygon);
+		displayDrawingInfo(polygon);
 	});
 	google.maps.event.addListener(polygon.getPath(), 'insert_at', function() {
-	  displayDrawingInfo(polygon);
+		displayDrawingInfo(polygon);
 	});
 	google.maps.event.addListener(polygon.getPath(), 'remove_at', function() {
-	  displayDrawingInfo(polygon);
+		displayDrawingInfo(polygon);
 	});
 	google.maps.event.addListener(polygon, 'click', function () {
 		changeCurrentDrawing(polygon);
@@ -79,18 +82,26 @@ function setDrawingMode(mode){
 	if(typeof mode == "undefined" || !mode)drawingManager.setDrawingMode(null);
 	else{
 		switch (mode) {
-		  case "polygon":
-		  case google.maps.drawing.OverlayType.POLYGON:
-			drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+			case "circle":
+			case google.maps.drawing.OverlayType.CIRCLE:
+				map.setOptions({cursor:'crosshair'});
+			
+			case "polygon":
+			case google.maps.drawing.OverlayType.POLYGON:
+				drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+				map.setOptions({draggableCursor:'crosshair'});
 			break;
-		  case "polyline":
-		  case google.maps.drawing.OverlayType.POLYLINE:
-		  	saveWorkingLine();
-		  	mouse_draw = true;
-		  	setMapDrawingModeOptions("on");
-		  	changeCurrentDrawing(null);
+			
+			case "polyline":
+			case google.maps.drawing.OverlayType.POLYLINE:
+				saveWorkingLine();
+				mouse_draw = true;
+				setMapDrawingModeOptions("on");
+				changeCurrentDrawing(null);
+				map.setOptions({draggableCursor:'crosshair'});
 			break;
-		  default:
+			
+			default:
 			drawingManager.setDrawingMode(null);
 			break;
 		}
@@ -145,7 +156,7 @@ function changeCurrentDrawing(new_shape){
 function setDefaultDrawingOptions(options,update){
 	if(typeof update == "undefined")update = false;
 	if(typeof options == "undefined" || !options)options = new Array();
-	if(typeof options['strokeColor'] == "undefined" || update)options['strokeColor']  = getStrokeColor();
+	if(typeof options['strokeColor'] == "undefined" || update)options['strokeColor']	= getStrokeColor();
 	if(typeof options['strokeOpacity'] == "undefined")options['strokeOpacity'] = 0.8;
 	if(typeof options['strokeWeight'] == "undefined")options['strokeWeight'] = 1;
 	if(typeof options['fillColor'] == "undefined" || update)options['fillColor'] = getFillColor();
@@ -153,15 +164,22 @@ function setDefaultDrawingOptions(options,update){
 	if(typeof options['geodesic'] == "undefined" || update)options['geodesic'] = false;
 	if(typeof options['editable'] == "undefined")options['editable'] = false;
 	if(typeof options['draggable'] == "undefined")options['draggable'] = false;
+	if(typeof options['cursor'] == "undefined")options['cursor'] = "hand";
 	
 	return options;
 }
 
+
+
+//
+// CREATE OBJECTS ON MAP
+//
 function createCircle(latLng,radius,options){
 	options = setDefaultDrawingOptions(options);
 	options['map']=map;
 	options['center']=latLng;
 	options['radius']=radius;
+	options['cursor']="hand";
 
 	var circle = new google.maps.Circle(options);
 	circle.drawing_type = "circle";
@@ -217,7 +235,7 @@ function createMarker(latLng,name,icon){
 
 function createPolygon(points,options,type){
 	if(typeof type == "undefined")type = "polygon";
-	if(type != "polygon" &&  type != "polyline")return false
+	if(type != "polygon" &&	type != "polyline")return false
 	options = setDefaultDrawingOptions(options);
 	options['map']=map;
 	var path = new Array();
@@ -233,7 +251,53 @@ function createPolygon(points,options,type){
 	if(type == "polyline")drawings['polylines'].push(polygon);
 	return true;
 }
+//
+//
+//
 
+
+/*
+function showS2Cells(level, style) {
+    bounds = map.getBounds()
+    size = L.CRS.Earth.distance(bounds.getSouthWest(), bounds.getNorthEast()) / 10000 + 1 | 0
+    count = 2 ** level * size >> 11
+
+    function addPoly(cell) {
+        vertices = cell.getCornerLatLngs()
+        poly = L.polygon(vertices,
+            Object.assign({color: 'blue', opacity: 0.3, weight: 2, fillOpacity: 0.0}, style))
+        if (cell.level === 13) {
+            exLayerGroup.addLayer(poly)
+        } else if (cell.level === 14) {
+            gymLayerGroup.addLayer(poly)
+        } else if (cell.level === 17) {
+            stopLayerGroup.addLayer(poly)
+        }
+    }
+
+    // add cells spiraling outward
+    let cell = S2.S2Cell.FromLatLng(bounds.getCenter(), level)
+    let steps = 1
+    let direction = 0
+    do {
+        for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < steps; i++) {
+                addPoly(cell)
+                cell = cell.getNeighbors()[direction % 4]
+            }
+            direction++
+        }
+        steps++
+    } while (steps < count)
+}
+
+showS2Cells(13, {color: 'red'})
+*/
+
+
+//
+//
+//
 function removeActiveDrawing(){
 	changeCurrentDrawing(null)
 	removeDrawing(current_shape);
@@ -301,14 +365,14 @@ function displayDrawingInfo(shape,element_id){
 		}
 		if(drawing_type == "polygon"){
 			var fenceArea=getAreaData(shape).split(" "), fensePerimeter=getPerimeterData(shape).split(" ");
-			coordLetter=Object.keys(shape.latLngs)[0]; console.info("Selected shape has \""+shape.latLngs[coordLetter][0][coordLetter].length+"\" points below:");
+			coordLetter=Object.keys(shape.latLngs)[0]; //console.info("Selected shape has \""+shape.latLngs[coordLetter][0][coordLetter].length+"\" points below:");
 			var allCorners="[", allCornersTxt="";
 			for(var coord=0;coord<shape.latLngs[coordLetter][0][coordLetter].length;coord++){
 				allCorners += "["+shape.latLngs[coordLetter][0][coordLetter][coord].lat()+","+shape.latLngs[coordLetter][0][coordLetter][coord].lng()+"],";
 				allCornersTxt += shape.latLngs[coordLetter][0][coordLetter][coord].lat()+","+shape.latLngs[coordLetter][0][coordLetter][coord].lng()+"\n";
 			}
-			allCorners=allCorners.slice(0,-1);allCorners += "]";allCorners=JSON.parse(allCorners);console.info(allCornersTxt);
-			info.innerHTML = fenceArea[0]+": <i>"+fenceArea[1]+"</i>m | "+fensePerimeter[0]+": <i>"+fensePerimeter[1]+"</i>m";
+			allCorners=allCorners.slice(0,-1);allCorners += "]";allCorners=JSON.parse(allCorners);//console.info(allCornersTxt);
+			info.innerHTML = fenceArea[0]+": <i>"+fenceArea[1]+"</i>m | "+fensePerimeter[0]+": <i>"+fensePerimeter[1]+"</i>m | GeofenceID: <i>"+shape.zIndex+"</i>";
 		}
 		if(drawing_type == "polyline"){
 			var info_text = getPerimeterData(shape);
@@ -324,7 +388,7 @@ function displayDrawingInfo(shape,element_id){
 }
 
 function getStrokeControl(){
-	var colorPicker =  $("#border-map-control");
+	var colorPicker =	$("#border-map-control");
 	if(colorPicker.length === 0){
 		colorPicker = $("#line-color-map-control");
 	}
@@ -332,7 +396,7 @@ function getStrokeControl(){
 }
 
 function getFillControl(){
-	var colorPicker =  $("#circle-map-control");
+	var colorPicker =	$("#circle-map-control");
 	if(colorPicker.length === 0){
 		colorPicker = $("#area-map-control");
 	}
@@ -387,10 +451,10 @@ function setInputRadius(circle){
 		radius_unit = $("select#radius-unit-map-control").val();
 
 		switch(radius_unit){
-			case "Meters":  { input_value = meters;				break;}
+			case "Meters":	{ input_value = meters;				break;}
 			case "KM": { input_value = meters/1000;			break;}
 			case "Feet": { input_value = meters*3.28084;		break;}
-			case "Miles": { input_value = meters*0.000621371;  break;}
+			case "Miles": { input_value = meters*0.000621371;	break;}
 			default :
 			{
 				alert("Invalid radius unit");
@@ -464,6 +528,10 @@ function displaySaveLink(url, display_field){
 	}
 }
 
+
+//
+// LOAD SHAPES FROM USER INPUT
+//
 function loadShapes(type,data_array){
 	var i=0;
 	if(typeof data_array == undefined || !data_array)data_array = new Array();
@@ -562,7 +630,7 @@ function zoomToShape(shape){
 function getPathArray(polygon,return_type){
 	if(typeof return_type == "undefined")return_type = "array";
 	var drawing_type = getDrawingTypeOfShape(polygon);
-	points  = polygon.getPath();
+	points	= polygon.getPath();
 	path = [];
 	for(var i=0;i<points.length;i++){
 		if(return_type == "object_array")path.push(points.getAt(i));
@@ -580,7 +648,7 @@ function getAreaData(shape,return_type){
 	if(typeof return_type == "undefined")return_type = "text";
 	drawing_type = getDrawingTypeOfShape(shape);
 	if(drawing_type == "polygon"){
-		var polyPoints  = shape.getPath();
+		var polyPoints	= shape.getPath();
 		//area calculation
 		var meters = google.maps.geometry.spherical.computeArea(polyPoints);
 		var kilometer = meters/1000000;
@@ -597,7 +665,7 @@ function getPerimeterData(shape,return_type){
 	if(typeof return_type == "undefined")return_type = "text";
 	drawing_type = getDrawingTypeOfShape(shape);
 	if(drawing_type == "polygon" || drawing_type == "polyline"){
-		var path  = shape.getPath();
+		var path	= shape.getPath();
 		//area calculation
 		meters = google.maps.geometry.spherical.computeLength(path);
 		if(meters>100)extra_decimal=0;
@@ -679,7 +747,6 @@ function setMapDrawingModeOptions(mode){
 	if(mode=="on"){
 		setAllDrawingsClickable(false);
 		map.setClickableIcons(false);
-		map.setOptions({draggableCursor:'crosshair'});
 	}
 	if(mode=="off"){
 		setAllDrawingsClickable(true);
