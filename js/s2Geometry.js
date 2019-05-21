@@ -48,7 +48,7 @@
 
     /*
     S2.LatLngToXYZ = function(latLng) {
-      // http://stackoverflow.com/questions/8981943/lat-long-to-x-y-z-position-in-js-not-working
+      // https://stackoverflow.com/questions/8981943/lat-long-to-x-y-z-position-in-js-not-working
       var lat = latLng.lat;
       var lon = latLng.lng;
       var DEG_TO_RAD = Math.PI / 180.0;
