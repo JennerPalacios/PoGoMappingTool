@@ -80,8 +80,8 @@
 				for (PAinPutLine=0; PAinPutLine < PAinPut.length; PAinPutLine++) {
 					jsonFieldData += "["; 
 					if(type==="circle"){ inputRadius=getInputRadius() }
-					if(type==="gym"){ icon="https://raw.githubusercontent.com/JennerPalacios/PoGoMappingTool/master/img/gym-pin.png" } 
-					if(type==="pokestop"){ icon="https://raw.githubusercontent.com/JennerPalacios/PoGoMappingTool/master/img/stop-pin.png" } 
+					if(type==="gym"){ icon="img/gym-pin.png" } 
+					if(type==="pokestop"){ icon="img/stop-pin.png" } 
 					var uics=PAinPut[PAinPutLine].split(",");
 					jsonFieldData += inputRadius+","+uics[0]+","+uics[1]+",\"#AAAAAA\",\"#000000\",0.3,\""+icon+"\"],";
 					//console.info(jsonFieldData);
